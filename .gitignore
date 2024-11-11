@@ -1,0 +1,8 @@
+.direnv
+target/
+.pre-commit-config.yaml
+
+
+# Added by cargo
+
+/target
