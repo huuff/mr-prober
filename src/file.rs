@@ -1,6 +1,6 @@
 use std::{marker::PhantomData, str::FromStr};
 
-use crate::{Poller, PollerRetriever};
+use crate::{Prober, ProberRetriever};
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "runtime-tokio")] {
@@ -10,18 +10,18 @@ cfg_if::cfg_if! {
     }
 }
 
-pub struct FileStoragePoller<Item, Sentinel, Retriever> {
+pub struct FileBackedProber<Item, Sentinel, Retriever> {
     retriever: Retriever,
     file: File,
     _item: PhantomData<Item>,
     _sentinel: PhantomData<Sentinel>,
 }
 
-impl<Item, Sentinel, Retriever> Poller for FileStoragePoller<Item, Sentinel, Retriever>
+impl<Item, Sentinel, Retriever> Prober for FileBackedProber<Item, Sentinel, Retriever>
 where
     Sentinel: ToString + FromStr,
     <Sentinel as FromStr>::Err: std::fmt::Debug,
-    Retriever: PollerRetriever<Item, Sentinel>,
+    Retriever: ProberRetriever<Item, Sentinel>,
 {
     type Item = Item;
     type Sentinel = Sentinel;
@@ -42,7 +42,7 @@ where
 // TODO: how can I clean this up so there aren't so many cfg_ifs?
 // TODO: handle errs
 
-impl<Item, Sentinel, Retriever> FileStoragePoller<Item, Sentinel, Retriever> {
+impl<Item, Sentinel, Retriever> FileBackedProber<Item, Sentinel, Retriever> {
     async fn new(file_path: &str, retriever: Retriever) -> Self {
         Self {
             retriever,

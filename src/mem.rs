@@ -1,14 +1,14 @@
 use std::marker::PhantomData;
 
-use crate::{Poller, PollerRetriever};
+use crate::{Prober, ProberRetriever};
 
-pub struct InMemoryPoller<Item, Sentinel, Retriever> {
+pub struct MemoryBackedProber<Item, Sentinel, Retriever> {
     last_sentinel: Option<Sentinel>,
     retriever: Retriever,
     _item: PhantomData<Item>,
 }
 
-impl<Item, Sentinel, Retriever> InMemoryPoller<Item, Sentinel, Retriever> {
+impl<Item, Sentinel, Retriever> MemoryBackedProber<Item, Sentinel, Retriever> {
     pub fn new(retriever: Retriever) -> Self {
         Self {
             last_sentinel: None,
@@ -18,9 +18,9 @@ impl<Item, Sentinel, Retriever> InMemoryPoller<Item, Sentinel, Retriever> {
     }
 }
 
-impl<Item, Sentinel, Retriever> Poller for InMemoryPoller<Item, Sentinel, Retriever>
+impl<Item, Sentinel, Retriever> Prober for MemoryBackedProber<Item, Sentinel, Retriever>
 where
-    Retriever: PollerRetriever<Item, Sentinel>,
+    Retriever: ProberRetriever<Item, Sentinel>,
 {
     type Item = Item;
     type Sentinel = Sentinel;
