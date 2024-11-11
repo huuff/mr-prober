@@ -1,0 +1,8 @@
+services:
+  testdb:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: test
+    ports:
+      - "17817:5432"
