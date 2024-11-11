@@ -4,8 +4,14 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+tokio = { version = "1", optional = true }
+cfg-if = { version = "1", optional = true }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
 sqlx = { version = "0.8", features = ["postgres", "runtime-tokio"] }
 enclose = { version = "1" }
+
+[features]
+file = ["dep:cfg-if"]
+runtime-tokio = ["dep:tokio", "tokio/fs", "tokio/sync"]

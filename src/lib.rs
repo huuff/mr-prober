@@ -1,3 +1,5 @@
+#[cfg(feature = "file")]
+pub mod file;
 pub mod mem;
 
 use std::future::Future;
