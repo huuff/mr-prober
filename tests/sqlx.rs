@@ -1,4 +1,4 @@
-use mr_prober::{InMemoryPoller, Poller};
+use mr_prober::{mem::InMemoryPoller, Poller};
 use sqlx::Row;
 
 #[sqlx::test]
