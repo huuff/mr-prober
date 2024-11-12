@@ -9,7 +9,7 @@ async fn in_memory_sqlx_test(db: sqlx::PgPool) {
         .await
         .unwrap();
 
-    let mut poller = MemoryBackedProber::<i64, i64, _>::new(move |_last: Option<&i64>| {
+    let mut poller = MemoryBackedProber::new(move |_last: Option<&i64>| {
         let db = db.clone();
         async move {
             let res = sqlx::query("SELECT nextval('test_seq') AS next")
