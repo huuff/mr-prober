@@ -14,4 +14,4 @@ enclose = { version = "1" }
 
 [features]
 file = ["dep:cfg-if"]
-runtime-tokio = ["dep:tokio", "tokio/fs", "tokio/sync"]
+runtime-tokio = ["dep:tokio", "tokio/fs", "tokio/sync", "tokio/io-util"]
