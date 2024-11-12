@@ -64,27 +64,26 @@ cfg_if::cfg_if! {
 
 
             async fn read_string(file: &Self::File) -> String {
-                use tokio::io::AsyncReadExt;
+                use tokio::io::AsyncReadExt as _;
+                use tokio::io::AsyncSeekExt as _;
 
                 let mut output = String::new();
-                file
-                    .lock()
-                    .await
-                    .read_to_string(&mut output)
-                    .await
-                    .unwrap();
+                let mut file = file.lock().await;
+                file.rewind().await.unwrap();
+                file.read_to_string(&mut output).await.unwrap();
+
                 output
             }
 
             async fn write_str(file: &Self::File, text: &str) {
-                use tokio::io::AsyncWriteExt;
+                use tokio::io::AsyncWriteExt as _;
+                use tokio::io::AsyncSeekExt as _;
 
-                file
-                    .lock()
-                    .await
-                    .write_all(text.as_bytes())
-                    .await
-                    .unwrap();
+                let mut file = file.lock().await;
+
+                file.rewind().await.unwrap();
+                file.set_len(0).await.unwrap();
+                file.write_all(text.as_bytes()).await.unwrap();
             }
         }
     } else {
