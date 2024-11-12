@@ -1,4 +1,5 @@
 use mr_prober::{mem::MemorySentinelStorage, Prober};
+use rand::distributions::DistString;
 use sqlx::Row;
 
 #[sqlx::test]
@@ -45,7 +46,9 @@ async fn file_sqlx_tst(db: sqlx::PgPool) {
             .get(0)
     };
 
-    let mut prober = Prober::from_file("/tmp/testorage.txt", processor).await;
+    let test_id = rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 10);
+    let file_path = format!("/tmp/mrprober-test-{test_id}");
+    let mut prober = Prober::from_file(&file_path, processor).await;
 
     // ACT
     for _ in 0..10 {

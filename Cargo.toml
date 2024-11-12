@@ -11,6 +11,7 @@ cfg-if = { version = "1", optional = true }
 tokio = { version = "1", features = ["full"] }
 sqlx = { version = "0.8", features = ["postgres", "runtime-tokio"] }
 enclose = { version = "1" }
+rand = { version = "0.8" }
 
 [features]
 file = ["dep:cfg-if"]
