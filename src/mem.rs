@@ -1,28 +1,16 @@
-use crate::{Prober, ProberRetriever};
+use crate::SentinelStorage;
 
-pub struct MemoryBackedProber< Sentinel, Retriever> {
-    last_sentinel: Option<Sentinel>,
-    retriever: Retriever,
+#[derive(Default)]
+pub struct MemorySentinelStorage<Sentinel> {
+    sentinel: Option<Sentinel>,
 }
 
-impl<Sentinel, Retriever> MemoryBackedProber<Sentinel, Retriever> {
-    pub fn new(retriever: Retriever) -> Self {
-        Self {
-            last_sentinel: None,
-            retriever,
-        }
-    }
-}
-
-impl<Item, Sentinel, Retriever> Prober<Item, Sentinel> for MemoryBackedProber<Sentinel, Retriever>
-where
-    Retriever: ProberRetriever<Item, Sentinel>,
-{
-    async fn next(&self) -> Option<Item> {
-        self.retriever.next(self.last_sentinel.as_ref()).await
+impl<Sentinel: Clone> SentinelStorage<Sentinel> for MemorySentinelStorage<Sentinel> {
+    async fn current(&self) -> Option<Sentinel> {
+        self.sentinel.clone()
     }
 
     async fn commit(&mut self, sentinel: Sentinel) {
-        self.last_sentinel.replace(sentinel);
+        self.sentinel.replace(sentinel);
     }
 }
