@@ -32,7 +32,6 @@ where
     }
 }
 
-// TODO: how can I clean this up so there aren't so many cfg_ifs?
 // TODO: handle errs
 
 impl<Item, Sentinel, Retriever> FileBackedProber<Item, Sentinel, Retriever> {
