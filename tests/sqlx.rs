@@ -20,9 +20,11 @@ async fn in_memory_sqlx_test(db: sqlx::PgPool) {
 
     let mut prober = Prober::new(storage, processor);
 
+    // ACT
     for _ in 0..10 {
         prober.probe().await
     }
 
+    // ASSERT
     assert_eq!(prober.current().await, Some(10));
 }

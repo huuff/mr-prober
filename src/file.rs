@@ -26,7 +26,7 @@ where
 // TODO: handle errs
 
 impl FileSentinelStorage {
-    async fn new(file_path: &str) -> Self {
+    pub async fn open(file_path: &str) -> Self {
         Self {
             file: RuntimeImpl::open_file(file_path).await,
         }
