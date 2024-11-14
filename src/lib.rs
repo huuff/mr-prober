@@ -5,6 +5,7 @@ pub mod proc;
 
 use std::{future::Future, marker::PhantomData};
 
+#[cfg(feature = "file")]
 use file::FileSentinelStorage;
 use mem::MemorySentinelStorage;
 use proc::Processor;
