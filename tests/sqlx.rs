@@ -15,15 +15,14 @@ async fn in_memory_sqlx_test(db: sqlx::PgPool) {
         sqlx::query("SELECT nextval('test_seq') AS next")
             .fetch_one(&db)
             .await
-            .unwrap()
-            .get(0)
+            .map(|row| row.get(0))
     };
 
     let mut prober = Prober::new(storage, processor);
 
     // ACT
     for _ in 0..10 {
-        prober.probe().await
+        prober.probe().await.unwrap();
     }
 
     // ASSERT
@@ -42,8 +41,7 @@ async fn file_sqlx_tst(db: sqlx::PgPool) {
         sqlx::query("SELECT nextval('test_seq') AS next")
             .fetch_one(&db)
             .await
-            .unwrap()
-            .get(0)
+            .map(|row| row.get(0))
     };
 
     let test_id = rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 10);
@@ -52,7 +50,7 @@ async fn file_sqlx_tst(db: sqlx::PgPool) {
 
     // ACT
     for _ in 0..10 {
-        prober.probe().await
+        prober.probe().await.unwrap();
     }
 
     // ASSERT

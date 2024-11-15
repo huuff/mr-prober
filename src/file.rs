@@ -2,15 +2,31 @@ use std::{future::Future, str::FromStr};
 
 use crate::SentinelStorage;
 
+/// A sentinel that can be stored in a file.
+///
+/// This storage uses [`ToString`] to save and [`FromStr`] to retrieve, so a sentinel has to
+/// implement both of these
+pub trait FileStorableSentinel:
+    ToString + FromStr<Err = <Self as FileStorableSentinel>::Err> + Clone
+{
+    // HACK a crazy hack from https://github.com/rust-lang/rust/issues/20671#issuecomment-1905186183
+    // to make this work
+    type Err: std::fmt::Debug;
+}
+
+impl<T> FileStorableSentinel for T
+where
+    T: ToString + FromStr + Clone,
+    <T as FromStr>::Err: std::fmt::Debug,
+{
+    type Err = <Self as FromStr>::Err;
+}
+
 pub struct FileSentinelStorage {
     file: <RuntimeImpl as Runtime>::File,
 }
 
-impl<Sentinel> SentinelStorage<Sentinel> for FileSentinelStorage
-where
-    Sentinel: ToString + FromStr + Clone,
-    <Sentinel as FromStr>::Err: std::fmt::Debug,
-{
+impl<Sentinel: FileStorableSentinel> SentinelStorage<Sentinel> for FileSentinelStorage {
     async fn commit(&mut self, sentinel: Sentinel) {
         RuntimeImpl::write_str(&self.file, &sentinel.to_string()).await;
     }
@@ -18,12 +34,11 @@ where
     async fn current(&self) -> Option<Sentinel> {
         let current_sentinel_string = RuntimeImpl::read_string(&self.file).await;
         // ROYY silly, but I'd love an is_not_empty method
+        // TODO: no unwrapping!
         (!current_sentinel_string.is_empty())
             .then(|| Sentinel::from_str(&current_sentinel_string).unwrap())
     }
 }
-
-// TODO: handle errs
 
 impl FileSentinelStorage {
     pub async fn open(file_path: &str) -> Self {

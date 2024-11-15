@@ -7,34 +7,39 @@ use std::{future::Future, marker::PhantomData};
 
 #[cfg(feature = "file")]
 use file::FileSentinelStorage;
+use file::FileStorableSentinel;
 use mem::MemorySentinelStorage;
 use proc::Processor;
 
-pub struct Prober<Storage, Proc, Sentinel> {
+pub struct Prober<Storage, Sentinel, Proc, ProcErr> {
     storage: Storage,
     processor: Proc,
     _sentinel: PhantomData<Sentinel>,
+    _proc_err: PhantomData<ProcErr>,
 }
 
-impl<Sentinel, Storage, Proc> Prober<Storage, Proc, Sentinel>
+impl<Storage, Sentinel, Proc, ProcErr> Prober<Storage, Sentinel, Proc, ProcErr>
 where
     Storage: SentinelStorage<Sentinel>,
-    Proc: Processor<Sentinel>,
+    Proc: Processor<Sentinel, ProcErr>,
 {
     pub fn new(storage: Storage, processor: Proc) -> Self {
         Self {
             storage,
             processor,
             _sentinel: PhantomData,
+            _proc_err: PhantomData,
         }
     }
 
-    pub async fn probe(&mut self) {
+    pub async fn probe(&mut self) -> Result<(), ProcErr> {
         let sentinel = self.storage.current().await;
 
-        if let Some(next) = self.processor.next(sentinel).await {
+        if let Some(next) = self.processor.next(sentinel).await? {
             self.storage.commit(next).await;
         }
+
+        Ok(())
     }
 
     pub async fn current(&self) -> Option<Sentinel> {
@@ -42,24 +47,24 @@ where
     }
 }
 
-impl<Sentinel: Default, Proc> Prober<MemorySentinelStorage<Sentinel>, Proc, Sentinel> {
+impl<Sentinel, Proc, ProcErr> Prober<MemorySentinelStorage<Sentinel>, Sentinel, Proc, ProcErr>
+where
+    Sentinel: Default + Clone,
+    Proc: Processor<Sentinel, ProcErr>,
+{
     pub fn in_memory(processor: Proc) -> Self {
-        Self {
-            storage: MemorySentinelStorage::default(),
-            processor,
-            _sentinel: PhantomData,
-        }
+        Self::new(MemorySentinelStorage::default(), processor)
     }
 }
 
 #[cfg(feature = "file")]
-impl<Sentinel, Proc> Prober<FileSentinelStorage, Proc, Sentinel> {
+impl<Sentinel, Proc, ProcErr> Prober<FileSentinelStorage, Sentinel, Proc, ProcErr>
+where
+    Sentinel: FileStorableSentinel,
+    Proc: Processor<Sentinel, ProcErr>,
+{
     pub async fn from_file(path: &str, proc: Proc) -> Self {
-        Self {
-            storage: FileSentinelStorage::open(path).await,
-            processor: proc,
-            _sentinel: PhantomData,
-        }
+        Self::new(FileSentinelStorage::open(path).await, proc)
     }
 }
 
