@@ -32,9 +32,9 @@ where
     pub async fn probe(&mut self) {
         let sentinel = self.storage.current().await;
 
-        let next = self.processor.next(sentinel).await;
-
-        self.storage.commit(next).await;
+        if let Some(next) = self.processor.next(sentinel).await {
+            self.storage.commit(next).await;
+        }
     }
 
     pub async fn current(&self) -> Option<Sentinel> {
