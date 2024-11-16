@@ -61,6 +61,6 @@ cfg_if::cfg_if! {
             }
         }
     } else {
-        compile_error!("you need to select a runtime")
+        compile_error!("you need to select a runtime");
     }
 }
