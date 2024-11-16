@@ -9,6 +9,8 @@ use proc::Processor;
 use store::SentinelStore;
 use thiserror::Error;
 
+// MAYBE we'd need a trait for this? it would be much easier to express for downstream crates than
+// as an `impl Prober` instead of this lot of generic params
 pub struct Prober<Store, Sentinel, Proc, ProcErr> {
     store: Store,
     processor: Proc,
@@ -31,6 +33,9 @@ where
         }
     }
 
+    // MAYBE rather than returning the sentinel, which requires a clone, we could return some error variant
+    // to tell the downstream user that there is no next sentinel, since sentinels should themselves be an
+    // inner concern?
     pub async fn probe(&mut self) -> Result<Option<Sentinel>, ProbeError<Store::Err, ProcErr>> {
         let current_sentinel = self.store.current().await.map_err(ProbeError::Store)?;
 
@@ -50,6 +55,7 @@ where
         Ok(next_sentinel)
     }
 
+    // MAYBE if sentinels should be an inner concern, we could remove this?
     pub async fn current(&self) -> Result<Option<Sentinel>, Store::Err> {
         self.store.current().await
     }
