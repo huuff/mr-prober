@@ -1,15 +1,18 @@
-use std::future::Future;
+use std::{convert::Infallible, future::Future};
 
-pub trait Processor<Sentinel> {
-    fn next(&self, current: Option<Sentinel>) -> impl Future<Output = Option<Sentinel>>;
+pub trait Processor<Sentinel, Err = Infallible> {
+    fn next(
+        &self,
+        current: Option<Sentinel>,
+    ) -> impl Future<Output = Result<Option<Sentinel>, Err>>;
 }
 
-impl<Sentinel, F, Fut> Processor<Sentinel> for F
+impl<Sentinel, Err, F, Fut> Processor<Sentinel, Err> for F
 where
     F: Fn(Option<Sentinel>) -> Fut,
-    Fut: Future<Output = Option<Sentinel>>,
+    Fut: Future<Output = Result<Option<Sentinel>, Err>>,
 {
-    async fn next(&self, current: Option<Sentinel>) -> Option<Sentinel> {
+    async fn next(&self, current: Option<Sentinel>) -> Result<Option<Sentinel>, Err> {
         (self)(current).await
     }
 }
