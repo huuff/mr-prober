@@ -1,6 +1,6 @@
 //! Preconfigured probers
 
-use crate::{proc::Processor, store, Prober};
+use crate::{proc::Processor, runtime, store, Prober};
 
 impl<Sentinel, Proc, ProcErr>
     Prober<store::mem::MemorySentinelStore<Sentinel>, Sentinel, Proc, ProcErr>
@@ -24,7 +24,7 @@ where
     pub async fn from_file(
         path: &str,
         proc: Proc,
-    ) -> Result<Self, <store::file::RuntimeImpl as store::file::Runtime>::Err> {
+    ) -> Result<Self, <runtime::RuntimeImpl as runtime::Runtime>::Err> {
         Ok(Self::new(
             store::file::FileSentinelStore::open(path).await?,
             proc,
