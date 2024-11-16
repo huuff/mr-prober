@@ -1,13 +1,13 @@
 use std::convert::Infallible;
 
-use crate::SentinelStorage;
+use crate::SentinelStore;
 
 #[derive(Default)]
-pub struct MemorySentinelStorage<Sentinel> {
+pub struct MemorySentinelStore<Sentinel> {
     sentinel: Option<Sentinel>,
 }
 
-impl<Sentinel: Clone> SentinelStorage<Sentinel> for MemorySentinelStorage<Sentinel> {
+impl<Sentinel: Clone> SentinelStore<Sentinel> for MemorySentinelStore<Sentinel> {
     type Err = Infallible;
 
     async fn current(&self) -> Result<Option<Sentinel>, Self::Err> {

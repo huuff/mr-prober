@@ -5,7 +5,7 @@ pub mod store;
 use std::marker::PhantomData;
 
 use proc::Processor;
-use store::SentinelStorage;
+use store::SentinelStore;
 use thiserror::Error;
 
 pub struct Prober<Storage, Sentinel, Proc, ProcErr> {
@@ -17,7 +17,7 @@ pub struct Prober<Storage, Sentinel, Proc, ProcErr> {
 
 impl<Storage, Sentinel, Proc, ProcErr> Prober<Storage, Sentinel, Proc, ProcErr>
 where
-    Storage: SentinelStorage<Sentinel>,
+    Storage: SentinelStore<Sentinel>,
     Proc: Processor<Sentinel, ProcErr>,
 {
     pub fn new(storage: Storage, processor: Proc) -> Self {

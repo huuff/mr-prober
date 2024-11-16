@@ -2,7 +2,7 @@ use std::{future::Future, str::FromStr};
 
 use thiserror::Error;
 
-use crate::SentinelStorage;
+use crate::SentinelStore;
 
 /// A sentinel that can be stored in a file.
 ///
@@ -24,11 +24,11 @@ where
     type ParseErr = <Self as FromStr>::Err;
 }
 
-pub struct FileSentinelStorage {
+pub struct FileSentinelStore {
     file: <RuntimeImpl as Runtime>::File,
 }
 
-impl<Sentinel: FileStorableSentinel> SentinelStorage<Sentinel> for FileSentinelStorage {
+impl<Sentinel: FileStorableSentinel> SentinelStore<Sentinel> for FileSentinelStore {
     type Err = FileStorageError<Sentinel>;
 
     async fn commit(&mut self, sentinel: Sentinel) -> Result<(), Self::Err> {
@@ -55,7 +55,7 @@ pub enum FileStorageError<Sentinel: FileStorableSentinel> {
     Filesystem(<RuntimeImpl as Runtime>::Err),
 }
 
-impl FileSentinelStorage {
+impl FileSentinelStore {
     pub async fn open(file_path: &str) -> Result<Self, <RuntimeImpl as Runtime>::Err> {
         Ok(Self {
             file: RuntimeImpl::open_file(file_path).await?,

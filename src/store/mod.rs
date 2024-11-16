@@ -4,7 +4,7 @@ pub mod mem;
 
 use std::future::Future;
 
-pub trait SentinelStorage<Sentinel> {
+pub trait SentinelStore<Sentinel> {
     type Err;
 
     fn current(&self) -> impl Future<Output = Result<Option<Sentinel>, Self::Err>>;
