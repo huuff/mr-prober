@@ -6,10 +6,10 @@ pub mod proc;
 use std::{future::Future, marker::PhantomData};
 
 #[cfg(feature = "file")]
-use file::FileSentinelStorage;
-use file::FileStorableSentinel;
+use file::{FileSentinelStorage, FileStorableSentinel};
 use mem::MemorySentinelStorage;
 use proc::Processor;
+use thiserror::Error;
 
 pub struct Prober<Storage, Sentinel, Proc, ProcErr> {
     storage: Storage,
@@ -32,19 +32,30 @@ where
         }
     }
 
-    pub async fn probe(&mut self) -> Result<(), ProcErr> {
-        let sentinel = self.storage.current().await;
+    pub async fn probe(&mut self) -> Result<(), ProbeError<Storage::Err, ProcErr>> {
+        let sentinel = self.storage.current().await.map_err(ProbeError::Store)?;
 
-        if let Some(next) = self.processor.next(sentinel).await? {
-            self.storage.commit(next).await;
+        if let Some(next) = self
+            .processor
+            .next(sentinel)
+            .await
+            .map_err(ProbeError::Processor)?
+        {
+            self.storage.commit(next).await.map_err(ProbeError::Store)?;
         }
 
         Ok(())
     }
 
-    pub async fn current(&self) -> Option<Sentinel> {
+    pub async fn current(&self) -> Result<Option<Sentinel>, Storage::Err> {
         self.storage.current().await
     }
+}
+
+#[derive(Error, Debug)]
+pub enum ProbeError<StorageErr, ProcessorError> {
+    Store(StorageErr),
+    Processor(ProcessorError),
 }
 
 impl<Sentinel, Proc, ProcErr> Prober<MemorySentinelStorage<Sentinel>, Sentinel, Proc, ProcErr>
@@ -63,12 +74,17 @@ where
     Sentinel: FileStorableSentinel,
     Proc: Processor<Sentinel, ProcErr>,
 {
-    pub async fn from_file(path: &str, proc: Proc) -> Self {
-        Self::new(FileSentinelStorage::open(path).await, proc)
+    pub async fn from_file(
+        path: &str,
+        proc: Proc,
+    ) -> Result<Self, <file::RuntimeImpl as file::Runtime>::Err> {
+        Ok(Self::new(FileSentinelStorage::open(path).await?, proc))
     }
 }
 
 pub trait SentinelStorage<Sentinel> {
-    fn current(&self) -> impl Future<Output = Option<Sentinel>>;
-    fn commit(&mut self, sentinel: Sentinel) -> impl Future<Output = ()>;
+    type Err;
+
+    fn current(&self) -> impl Future<Output = Result<Option<Sentinel>, Self::Err>>;
+    fn commit(&mut self, sentinel: Sentinel) -> impl Future<Output = Result<(), Self::Err>>;
 }

@@ -1,3 +1,5 @@
+use std::convert::Infallible;
+
 use crate::SentinelStorage;
 
 #[derive(Default)]
@@ -6,11 +8,14 @@ pub struct MemorySentinelStorage<Sentinel> {
 }
 
 impl<Sentinel: Clone> SentinelStorage<Sentinel> for MemorySentinelStorage<Sentinel> {
-    async fn current(&self) -> Option<Sentinel> {
-        self.sentinel.clone()
+    type Err = Infallible;
+
+    async fn current(&self) -> Result<Option<Sentinel>, Self::Err> {
+        Ok(self.sentinel.clone())
     }
 
-    async fn commit(&mut self, sentinel: Sentinel) {
+    async fn commit(&mut self, sentinel: Sentinel) -> Result<(), Self::Err> {
         self.sentinel.replace(sentinel);
+        Ok(())
     }
 }
