@@ -52,6 +52,8 @@ where
 
 #[derive(Error, Debug)]
 pub enum ProbeError<StorageErr, ProcessorError> {
+    #[error("store error: {0}")]
     Store(StorageErr),
+    #[error("processor error: {0}")]
     Processor(ProcessorError),
 }

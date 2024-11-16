@@ -14,13 +14,13 @@ pub trait FileStorableSentinel:
 {
     // HACK a crazy hack from https://github.com/rust-lang/rust/issues/20671#issuecomment-1905186183
     // to make this work
-    type ParseErr: std::fmt::Debug;
+    type ParseErr: std::fmt::Debug + std::fmt::Display;
 }
 
 impl<T> FileStorableSentinel for T
 where
     T: ToString + FromStr + Clone,
-    <T as FromStr>::Err: std::fmt::Debug,
+    <T as FromStr>::Err: std::fmt::Debug + std::fmt::Display,
 {
     type ParseErr = <Self as FromStr>::Err;
 }
@@ -52,7 +52,9 @@ impl<Sentinel: FileStorableSentinel> SentinelStore<Sentinel> for FileSentinelSto
 
 #[derive(Error, Debug)]
 pub enum FileStorageError<Sentinel: FileStorableSentinel> {
+    #[error("parse error: {0}")]
     Parse(<Sentinel as FileStorableSentinel>::ParseErr),
+    #[error("runtime filesystem error: {0}")]
     Filesystem(<RuntimeImpl as Runtime>::Err),
 }
 
