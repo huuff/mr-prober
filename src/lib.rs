@@ -9,44 +9,49 @@ use proc::Processor;
 use store::SentinelStore;
 use thiserror::Error;
 
-pub struct Prober<Storage, Sentinel, Proc, ProcErr> {
-    storage: Storage,
+pub struct Prober<Store, Sentinel, Proc, ProcErr> {
+    store: Store,
     processor: Proc,
     _sentinel: PhantomData<Sentinel>,
     _proc_err: PhantomData<ProcErr>,
 }
 
-impl<Storage, Sentinel, Proc, ProcErr> Prober<Storage, Sentinel, Proc, ProcErr>
+impl<Store, Sentinel, Proc, ProcErr> Prober<Store, Sentinel, Proc, ProcErr>
 where
-    Storage: SentinelStore<Sentinel>,
+    Sentinel: Clone,
+    Store: SentinelStore<Sentinel>,
     Proc: Processor<Sentinel, ProcErr>,
 {
-    pub fn new(storage: Storage, processor: Proc) -> Self {
+    pub fn new(storage: Store, processor: Proc) -> Self {
         Self {
-            storage,
+            store: storage,
             processor,
             _sentinel: PhantomData,
             _proc_err: PhantomData,
         }
     }
 
-    pub async fn probe(&mut self) -> Result<(), ProbeError<Storage::Err, ProcErr>> {
-        let sentinel = self.storage.current().await.map_err(ProbeError::Store)?;
+    pub async fn probe(&mut self) -> Result<Option<Sentinel>, ProbeError<Store::Err, ProcErr>> {
+        let current_sentinel = self.store.current().await.map_err(ProbeError::Store)?;
 
-        if let Some(next) = self
+        let next_sentinel = self
             .processor
-            .next(sentinel)
+            .next(current_sentinel)
             .await
-            .map_err(ProbeError::Processor)?
-        {
-            self.storage.commit(next).await.map_err(ProbeError::Store)?;
+            .map_err(ProbeError::Processor)?;
+
+        if let Some(ref next_sentinel) = next_sentinel {
+            self.store
+                .commit(next_sentinel.clone())
+                .await
+                .map_err(ProbeError::Store)?;
         }
 
-        Ok(())
+        Ok(next_sentinel)
     }
 
-    pub async fn current(&self) -> Result<Option<Sentinel>, Storage::Err> {
-        self.storage.current().await
+    pub async fn current(&self) -> Result<Option<Sentinel>, Store::Err> {
+        self.store.current().await
     }
 }
 
