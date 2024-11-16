@@ -1,14 +1,11 @@
-#[cfg(feature = "file")]
-pub mod file;
-pub mod mem;
+pub mod preconf;
 pub mod proc;
+pub mod store;
 
-use std::{future::Future, marker::PhantomData};
+use std::marker::PhantomData;
 
-#[cfg(feature = "file")]
-use file::{FileSentinelStorage, FileStorableSentinel};
-use mem::MemorySentinelStorage;
 use proc::Processor;
+use store::SentinelStorage;
 use thiserror::Error;
 
 pub struct Prober<Storage, Sentinel, Proc, ProcErr> {
@@ -56,35 +53,4 @@ where
 pub enum ProbeError<StorageErr, ProcessorError> {
     Store(StorageErr),
     Processor(ProcessorError),
-}
-
-impl<Sentinel, Proc, ProcErr> Prober<MemorySentinelStorage<Sentinel>, Sentinel, Proc, ProcErr>
-where
-    Sentinel: Default + Clone,
-    Proc: Processor<Sentinel, ProcErr>,
-{
-    pub fn in_memory(processor: Proc) -> Self {
-        Self::new(MemorySentinelStorage::default(), processor)
-    }
-}
-
-#[cfg(feature = "file")]
-impl<Sentinel, Proc, ProcErr> Prober<FileSentinelStorage, Sentinel, Proc, ProcErr>
-where
-    Sentinel: FileStorableSentinel,
-    Proc: Processor<Sentinel, ProcErr>,
-{
-    pub async fn from_file(
-        path: &str,
-        proc: Proc,
-    ) -> Result<Self, <file::RuntimeImpl as file::Runtime>::Err> {
-        Ok(Self::new(FileSentinelStorage::open(path).await?, proc))
-    }
-}
-
-pub trait SentinelStorage<Sentinel> {
-    type Err;
-
-    fn current(&self) -> impl Future<Output = Result<Option<Sentinel>, Self::Err>>;
-    fn commit(&mut self, sentinel: Sentinel) -> impl Future<Output = Result<(), Self::Err>>;
 }

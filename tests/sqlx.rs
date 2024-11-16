@@ -1,4 +1,4 @@
-use mr_prober::{mem::MemorySentinelStorage, Prober};
+use mr_prober::Prober;
 use rand::distributions::DistString;
 use sqlx::Row;
 
@@ -10,15 +10,12 @@ async fn in_memory_sqlx_test(db: sqlx::PgPool) {
         .await
         .unwrap();
 
-    let storage = MemorySentinelStorage::default();
-    let processor = |_sentinel: Option<i64>| async {
+    let mut prober = Prober::in_memory(|_sentinel: Option<i64>| async {
         sqlx::query("SELECT nextval('test_seq') AS next")
             .fetch_one(&db)
             .await
             .map(|row| row.get(0))
-    };
-
-    let mut prober = Prober::new(storage, processor);
+    });
 
     // ACT
     for _ in 0..10 {
