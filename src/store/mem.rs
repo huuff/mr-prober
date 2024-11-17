@@ -1,16 +1,12 @@
-use std::convert::Infallible;
-
-use crate::SentinelStore;
+use crate::{alias::DynErr, SentinelStore};
 
 #[async_trait::async_trait]
 impl<Sentinel: MemoryStorableSentinel> SentinelStore<Sentinel> for MemorySentinelStore<Sentinel> {
-    type Err = Infallible;
-
-    async fn current(&self) -> Result<Option<Sentinel>, Self::Err> {
+    async fn current(&self) -> Result<Option<Sentinel>, DynErr> {
         Ok(self.sentinel.clone())
     }
 
-    async fn commit(&mut self, sentinel: Sentinel) -> Result<(), Self::Err> {
+    async fn commit(&mut self, sentinel: Sentinel) -> Result<(), DynErr> {
         self.sentinel.replace(sentinel);
         Ok(())
     }

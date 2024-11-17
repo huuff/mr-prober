@@ -23,7 +23,7 @@ async fn in_memory_sqlx_test(db: sqlx::PgPool) {
     }
 
     // ASSERT
-    assert_eq!(prober.current().await, Ok(Some(10)));
+    assert_eq!(prober.current().await.unwrap(), Some(10));
 }
 
 #[sqlx::test]

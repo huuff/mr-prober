@@ -1,3 +1,4 @@
+mod alias;
 pub mod preconf;
 pub mod proc;
 pub mod runtime;
@@ -5,6 +6,7 @@ pub mod store;
 
 use std::marker::PhantomData;
 
+use alias::DynErr;
 use proc::Processor;
 use store::SentinelStore;
 use thiserror::Error;
@@ -36,7 +38,7 @@ where
     // MAYBE rather than returning the sentinel, which requires a clone, we could return some error variant
     // to tell the downstream user that there is no next sentinel, since sentinels should themselves be an
     // inner concern?
-    pub async fn probe(&mut self) -> Result<Option<Sentinel>, ProbeError<Store::Err, ProcErr>> {
+    pub async fn probe(&mut self) -> Result<Option<Sentinel>, ProbeError<ProcErr>> {
         let current_sentinel = self.store.current().await.map_err(ProbeError::Store)?;
 
         let next_sentinel = self
@@ -56,15 +58,15 @@ where
     }
 
     // MAYBE if sentinels should be an inner concern, we could remove this?
-    pub async fn current(&self) -> Result<Option<Sentinel>, Store::Err> {
+    pub async fn current(&self) -> Result<Option<Sentinel>, DynErr> {
         self.store.current().await
     }
 }
 
 #[derive(Error, Debug)]
-pub enum ProbeError<StorageErr, ProcessorError> {
+pub enum ProbeError<ProcessorError> {
     #[error("store error: {0}")]
-    Store(StorageErr),
+    Store(DynErr),
     #[error("processor error: {0}")]
     Processor(ProcessorError),
 }
