@@ -2,11 +2,10 @@
 pub mod file;
 pub mod mem;
 
-use std::future::Future;
-
+#[async_trait::async_trait]
 pub trait SentinelStore<Sentinel> {
     type Err;
 
-    fn current(&self) -> impl Future<Output = Result<Option<Sentinel>, Self::Err>>;
-    fn commit(&mut self, sentinel: Sentinel) -> impl Future<Output = Result<(), Self::Err>>;
+    async fn current(&self) -> Result<Option<Sentinel>, Self::Err>;
+    async fn commit(&mut self, sentinel: Sentinel) -> Result<(), Self::Err>;
 }

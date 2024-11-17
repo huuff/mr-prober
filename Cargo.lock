@@ -36,6 +36,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "45862d1c77f2228b9e10bc609d5bc203d86ebc9b87ad8d5d5167a6c9abf739d9"
 
 [[package]]
+name = "async-trait"
+version = "0.1.83"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "721cae7de5c34fbb2acd27e21e6d2cf7b886dce0c27388d46c4e6c47ea4318dd"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "atoi"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -736,6 +747,7 @@ dependencies = [
 name = "mr-prober"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "cfg-if",
  "enclose",
  "rand",

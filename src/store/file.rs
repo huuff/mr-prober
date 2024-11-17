@@ -5,30 +5,7 @@ use thiserror::Error;
 use crate::runtime::{Runtime, RuntimeImpl};
 use crate::SentinelStore;
 
-/// A sentinel that can be stored in a file.
-///
-/// This storage uses [`ToString`] to save and [`FromStr`] to retrieve, so a sentinel has to
-/// implement both of these
-pub trait FileStorableSentinel:
-    ToString + FromStr<Err = <Self as FileStorableSentinel>::ParseErr> + Clone
-{
-    // HACK a crazy hack from https://github.com/rust-lang/rust/issues/20671#issuecomment-1905186183
-    // to make this work
-    type ParseErr: std::fmt::Debug + std::fmt::Display;
-}
-
-impl<T> FileStorableSentinel for T
-where
-    T: ToString + FromStr + Clone,
-    <T as FromStr>::Err: std::fmt::Debug + std::fmt::Display,
-{
-    type ParseErr = <Self as FromStr>::Err;
-}
-
-pub struct FileSentinelStore {
-    file: <RuntimeImpl as Runtime>::File,
-}
-
+#[async_trait::async_trait]
 impl<Sentinel: FileStorableSentinel> SentinelStore<Sentinel> for FileSentinelStore {
     type Err = FileStorageError<Sentinel>;
 
@@ -64,4 +41,28 @@ impl FileSentinelStore {
             file: RuntimeImpl::open_file(file_path).await?,
         })
     }
+}
+
+/// A sentinel that can be stored in a file.
+///
+/// This storage uses [`ToString`] to save and [`FromStr`] to retrieve, so a sentinel has to
+/// implement both of these
+pub trait FileStorableSentinel:
+    ToString + FromStr<Err = <Self as FileStorableSentinel>::ParseErr> + Clone + Send + 'static
+{
+    // HACK a crazy hack from https://github.com/rust-lang/rust/issues/20671#issuecomment-1905186183
+    // to make this work
+    type ParseErr: std::fmt::Debug + std::fmt::Display;
+}
+
+impl<T> FileStorableSentinel for T
+where
+    T: ToString + FromStr + Clone + Send + 'static,
+    <T as FromStr>::Err: std::fmt::Debug + std::fmt::Display,
+{
+    type ParseErr = <Self as FromStr>::Err;
+}
+
+pub struct FileSentinelStore {
+    file: <RuntimeImpl as Runtime>::File,
 }
