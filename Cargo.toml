@@ -7,6 +7,7 @@ edition = "2021"
 tokio = { version = "1", optional = true }
 cfg-if = { version = "1" }
 thiserror = { version = "2" }
+async-trait = { version = "0.1" }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }

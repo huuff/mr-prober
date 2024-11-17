@@ -5,7 +5,7 @@ use crate::{proc::Processor, runtime, store, Prober};
 impl<Sentinel, Proc, ProcErr>
     Prober<store::mem::MemorySentinelStore<Sentinel>, Sentinel, Proc, ProcErr>
 where
-    Sentinel: Default + Clone,
+    Sentinel: store::mem::MemoryStorableSentinel,
     Proc: Processor<Sentinel, ProcErr>,
 {
     /// Creates a new prober that holds its sentinel value in memory
