@@ -1,4 +1,5 @@
 mod alias;
+pub mod auto;
 pub mod preconf;
 pub mod proc;
 pub mod runtime;
@@ -13,7 +14,7 @@ use thiserror::Error;
 
 #[async_trait::async_trait]
 pub trait Prober {
-    type ProcessorError: std::error::Error;
+    type ProcessorError: std::error::Error + Send + Sync + 'static;
 
     async fn probe(&mut self) -> Result<(), ProbeError<Self::ProcessorError>>;
 }
@@ -44,7 +45,7 @@ where
     Store: SentinelStore<Sentinel> + Send,
     Proc: Processor<Sentinel, ProcErr> + Send,
     Sentinel: Send,
-    ProcErr: std::error::Error + Send,
+    ProcErr: std::error::Error + Send + Sync + 'static,
 {
     type ProcessorError = ProcErr;
 
