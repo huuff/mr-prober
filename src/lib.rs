@@ -13,7 +13,7 @@ use thiserror::Error;
 
 #[async_trait::async_trait]
 pub trait Prober {
-    type ProcessorError;
+    type ProcessorError: std::error::Error;
 
     async fn probe(&mut self) -> Result<(), ProbeError<Self::ProcessorError>>;
 }
@@ -44,7 +44,7 @@ where
     Store: SentinelStore<Sentinel> + Send,
     Proc: Processor<Sentinel, ProcErr> + Send,
     Sentinel: Send,
-    ProcErr: Send,
+    ProcErr: std::error::Error + Send,
 {
     type ProcessorError = ProcErr;
 
