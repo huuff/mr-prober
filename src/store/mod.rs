@@ -1,8 +1,9 @@
-use crate::alias::DynErr;
-
 #[cfg(feature = "file")]
+mod blankets;
 pub mod file;
 pub mod mem;
+
+use crate::alias::DynErr;
 
 #[async_trait::async_trait]
 pub trait SentinelStore<Sentinel> {
