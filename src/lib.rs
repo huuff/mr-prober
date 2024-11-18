@@ -34,9 +34,6 @@ where
         }
     }
 
-    // MAYBE rather than returning the sentinel, which requires a clone, we could return some error variant
-    // to tell the downstream user that there is no next sentinel, since sentinels should themselves be an
-    // inner concern?
     pub async fn probe(&mut self) -> Result<(), ProbeError<ProcErr>> {
         let current_sentinel = self.store.current().await.map_err(ProbeError::Store)?;
 
@@ -50,9 +47,11 @@ where
                 .commit(next_sentinel)
                 .await
                 .map_err(ProbeError::Store)?;
-        }
 
-        Ok(())
+            Ok(())
+        } else {
+            Err(ProbeError::EmptyProbe)
+        }
     }
 }
 
@@ -62,4 +61,13 @@ pub enum ProbeError<ProcessorError> {
     Store(DynErr),
     #[error("processor error: {0}")]
     Processor(ProcessorError),
+    /// The probe didn't return anything. Not necessarily an error.
+    #[error("latest probe didn't return anything")]
+    EmptyProbe,
+}
+
+impl<T> ProbeError<T> {
+    pub fn is_empty(&self) -> bool {
+        matches!(self, ProbeError::EmptyProbe)
+    }
 }
