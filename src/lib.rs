@@ -22,7 +22,6 @@ pub struct Prober<Store, Sentinel, Proc, ProcErr> {
 
 impl<Store, Sentinel, Proc, ProcErr> Prober<Store, Sentinel, Proc, ProcErr>
 where
-    Sentinel: Clone,
     Store: SentinelStore<Sentinel>,
     Proc: Processor<Sentinel, ProcErr>,
 {
@@ -38,28 +37,22 @@ where
     // MAYBE rather than returning the sentinel, which requires a clone, we could return some error variant
     // to tell the downstream user that there is no next sentinel, since sentinels should themselves be an
     // inner concern?
-    pub async fn probe(&mut self) -> Result<Option<Sentinel>, ProbeError<ProcErr>> {
+    pub async fn probe(&mut self) -> Result<(), ProbeError<ProcErr>> {
         let current_sentinel = self.store.current().await.map_err(ProbeError::Store)?;
 
-        let next_sentinel = self
+        if let Some(next_sentinel) = self
             .processor
             .next(current_sentinel)
             .await
-            .map_err(ProbeError::Processor)?;
-
-        if let Some(ref next_sentinel) = next_sentinel {
+            .map_err(ProbeError::Processor)?
+        {
             self.store
-                .commit(next_sentinel.clone())
+                .commit(next_sentinel)
                 .await
                 .map_err(ProbeError::Store)?;
         }
 
-        Ok(next_sentinel)
-    }
-
-    // MAYBE if sentinels should be an inner concern, we could remove this?
-    pub async fn current(&self) -> Result<Option<Sentinel>, DynErr> {
-        self.store.current().await
+        Ok(())
     }
 }
 
