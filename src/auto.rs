@@ -48,3 +48,17 @@ pub enum OnEmptyStrategy {
     /// Wait this many seconds before trying again
     DelaySecs(u32),
 }
+
+pub trait IntoAutoProber: Sized {
+    fn into_auto(self) -> AutoProberImpl<Self>;
+}
+
+impl<P: Prober> IntoAutoProber for P {
+    fn into_auto(self) -> AutoProberImpl<Self> {
+        AutoProberImpl {
+            prober: self,
+            // TODO actually make this more configurable
+            on_empty: OnEmptyStrategy::Abort,
+        }
+    }
+}

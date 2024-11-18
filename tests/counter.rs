@@ -3,7 +3,11 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use mr_prober::{proc::Processor, Prober as _, ProberImpl};
+use mr_prober::{
+    auto::{AutoProber, IntoAutoProber},
+    proc::Processor,
+    Prober as _, ProberImpl,
+};
 use rand::distributions::DistString;
 
 #[tokio::test]
@@ -48,6 +52,23 @@ async fn in_file() {
     );
 }
 
+#[tokio::test]
+async fn auto_prober() {
+    // ARRANGE
+    let counter = Arc::new(Mutex::new(Counter::default()));
+
+    let prober = ProberImpl::in_memory(CounterProcessor::new(Arc::clone(&counter)));
+
+    // ACT
+    prober.into_auto().spawn().await.unwrap();
+
+    // ASSERT
+    assert_eq!(
+        counter.lock().unwrap().interactions,
+        vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    );
+}
+
 #[derive(Default)]
 struct Counter {
     interactions: Vec<u64>,
@@ -74,8 +95,12 @@ impl CounterProcessor {
 #[async_trait::async_trait]
 impl Processor<u64, Infallible> for CounterProcessor {
     async fn next(&self, current: Option<u64>) -> Result<Option<u64>, Infallible> {
+        if current.is_some_and(|it| it >= 10) {
+            return Ok(None);
+        }
+
         let next = self.counter.lock().unwrap().interact(current.unwrap_or(0));
 
-        Ok::<_, Infallible>(Some(next))
+        Ok(Some(next))
     }
 }
