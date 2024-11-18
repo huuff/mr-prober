@@ -1,3 +1,5 @@
+//! Blanket impls for stores
+
 use std::{future::Future, pin::Pin};
 
 use crate::alias::DynErr;
