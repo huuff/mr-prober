@@ -36,13 +36,13 @@ pub trait FileStorableSentinel:
 {
     // HACK a crazy hack from https://github.com/rust-lang/rust/issues/20671#issuecomment-1905186183
     // to make this work
-    type ParseErr: std::error::Error;
+    type ParseErr: std::error::Error + Send + Sync;
 }
 
 impl<T> FileStorableSentinel for T
 where
     T: ToString + FromStr + Clone + Send + 'static,
-    <T as FromStr>::Err: std::error::Error,
+    <T as FromStr>::Err: std::error::Error + Send + Sync,
 {
     type ParseErr = <Self as FromStr>::Err;
 }

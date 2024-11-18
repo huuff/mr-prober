@@ -11,20 +11,23 @@ use proc::Processor;
 use store::SentinelStore;
 use thiserror::Error;
 
+#[async_trait::async_trait]
+pub trait Prober {
+    type ProcessorError;
+
+    async fn probe(&mut self) -> Result<(), ProbeError<Self::ProcessorError>>;
+}
+
 // MAYBE we'd need a trait for this? it would be much easier to express for downstream crates than
 // as an `impl Prober` instead of this lot of generic params
-pub struct Prober<Store, Sentinel, Proc, ProcErr> {
+pub struct ProberImpl<Store, Sentinel, Proc, ProcErr> {
     store: Store,
     processor: Proc,
     _sentinel: PhantomData<Sentinel>,
     _proc_err: PhantomData<ProcErr>,
 }
 
-impl<Store, Sentinel, Proc, ProcErr> Prober<Store, Sentinel, Proc, ProcErr>
-where
-    Store: SentinelStore<Sentinel>,
-    Proc: Processor<Sentinel, ProcErr>,
-{
+impl<Store, Sentinel, Proc, ProcErr> ProberImpl<Store, Sentinel, Proc, ProcErr> {
     pub fn new(storage: Store, processor: Proc) -> Self {
         Self {
             store: storage,
@@ -33,8 +36,19 @@ where
             _proc_err: PhantomData,
         }
     }
+}
 
-    pub async fn probe(&mut self) -> Result<(), ProbeError<ProcErr>> {
+#[async_trait::async_trait]
+impl<Store, Sentinel, Proc, ProcErr> Prober for ProberImpl<Store, Sentinel, Proc, ProcErr>
+where
+    Store: SentinelStore<Sentinel> + Send,
+    Proc: Processor<Sentinel, ProcErr> + Send,
+    Sentinel: Send,
+    ProcErr: Send,
+{
+    type ProcessorError = ProcErr;
+
+    async fn probe(&mut self) -> Result<(), ProbeError<ProcErr>> {
         let current_sentinel = self.store.current().await.map_err(ProbeError::Store)?;
 
         if let Some(next_sentinel) = self

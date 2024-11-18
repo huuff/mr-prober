@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use mr_prober::Prober;
+use mr_prober::{Prober as _, ProberImpl};
 use rand::distributions::DistString;
 
 #[derive(Default)]
@@ -24,7 +24,7 @@ async fn in_memory() {
     // ARRANGE
     let counter = Arc::new(Mutex::new(Counter::default()));
 
-    let mut prober = Prober::in_memory(|sentinel: Option<u64>| {
+    let mut prober = ProberImpl::in_memory(|sentinel: Option<u64>| {
         let counter = Arc::clone(&counter);
         async move {
             let next = counter.lock().unwrap().interact(sentinel.unwrap_or(0));
@@ -52,7 +52,7 @@ async fn in_file() {
 
     let test_id = rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 10);
     let file_path = format!("/tmp/mrprober-test-{test_id}");
-    let mut prober = Prober::from_file(&file_path, |sentinel: Option<u64>| {
+    let mut prober = ProberImpl::from_file(&file_path, |sentinel: Option<u64>| {
         let counter = Arc::clone(&counter);
         async move {
             let next = counter.lock().unwrap().interact(sentinel.unwrap_or(0));
