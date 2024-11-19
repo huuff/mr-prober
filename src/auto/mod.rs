@@ -32,6 +32,12 @@ where
                             RuntimeImpl::sleep(secs.into()).await;
                         }
                         AutoProberStrategy::Continue => {}
+                        AutoProberStrategy::Backoff(ref mut backoff) => {
+                            match backoff.next_sleep() {
+                                Some(delay) => RuntimeImpl::sleep(delay.as_secs()).await,
+                                None => return, // maybe an err would be better
+                            }
+                        }
                     },
                     Err(err) if err.is_empty() => match self.cfg.on_empty {
                         AutoProberStrategy::Abort => {
@@ -45,6 +51,13 @@ where
                             RuntimeImpl::sleep(secs.into()).await;
                         }
                         AutoProberStrategy::Continue => {}
+                        AutoProberStrategy::Backoff(ref mut backoff) => {
+                            // TODO: kinda duplicated
+                            match backoff.next_sleep() {
+                                Some(delay) => RuntimeImpl::sleep(delay.as_secs()).await,
+                                None => return, // maybe an err would be better
+                            }
+                        }
                     },
                     err @ Err(_) => err.unwrap(),
                 }
