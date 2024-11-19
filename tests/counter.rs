@@ -1,13 +1,10 @@
+use mr_prober::auto::into::IntoAutoProber;
 use std::{
     convert::Infallible,
     sync::{Arc, Mutex},
 };
 
-use mr_prober::{
-    auto::{AutoProber, IntoAutoProber},
-    proc::Processor,
-    Prober as _, ProberImpl,
-};
+use mr_prober::{auto::AutoProber, proc::Processor, Prober as _, ProberImpl};
 use rand::distributions::DistString;
 
 #[tokio::test]
@@ -60,7 +57,7 @@ async fn auto_prober() {
     let prober = ProberImpl::in_memory(CounterProcessor::new(Arc::clone(&counter)));
 
     // ACT
-    prober.into_auto().spawn().await.unwrap();
+    prober.into_auto(Default::default()).spawn().await.unwrap();
 
     // ASSERT
     assert_eq!(

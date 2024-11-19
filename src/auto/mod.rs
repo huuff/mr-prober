@@ -1,3 +1,8 @@
+pub mod into;
+pub mod strategy;
+
+use strategy::{AutoProberCfg, AutoProberStrategy};
+
 use crate::{
     runtime::{Runtime as _, RuntimeImpl},
     Prober,
@@ -9,7 +14,7 @@ pub trait AutoProber<P: Prober> {
 
 pub struct AutoProberImpl<P> {
     prober: P,
-    on_empty: OnEmptyStrategy,
+    cfg: AutoProberCfg,
 }
 
 #[async_trait::async_trait]
@@ -21,44 +26,29 @@ where
         RuntimeImpl::spawn(async move {
             loop {
                 match self.prober.probe().await {
-                    Ok(_) => {} // continue
-                    Err(err) if err.is_empty() => match self.on_empty {
-                        OnEmptyStrategy::Abort => {
+                    Ok(_) => match self.cfg.on_success {
+                        AutoProberStrategy::Abort => return,
+                        AutoProberStrategy::DelaySecs(secs) => {
+                            RuntimeImpl::sleep(secs.into()).await;
+                        }
+                        AutoProberStrategy::Continue => {}
+                    },
+                    Err(err) if err.is_empty() => match self.cfg.on_empty {
+                        AutoProberStrategy::Abort => {
                             tracing::info!("probe is empty, aborting");
                             return;
                         }
-                        OnEmptyStrategy::DelaySecs(secs) => {
+                        AutoProberStrategy::DelaySecs(secs) => {
                             tracing::info!(
                                 "probe is empty, waiting {secs} seconds before trying again"
                             );
                             RuntimeImpl::sleep(secs.into()).await;
                         }
+                        AutoProberStrategy::Continue => {}
                     },
                     err @ Err(_) => err.unwrap(),
                 }
             }
         })
-    }
-}
-
-/// What to do when the probe comes out empty
-pub enum OnEmptyStrategy {
-    /// Stop the auto-prober
-    Abort,
-    /// Wait this many seconds before trying again
-    DelaySecs(u32),
-}
-
-pub trait IntoAutoProber: Sized {
-    fn into_auto(self) -> AutoProberImpl<Self>;
-}
-
-impl<P: Prober> IntoAutoProber for P {
-    fn into_auto(self) -> AutoProberImpl<Self> {
-        AutoProberImpl {
-            prober: self,
-            // TODO actually make this more configurable
-            on_empty: OnEmptyStrategy::Abort,
-        }
     }
 }
