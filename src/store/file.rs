@@ -4,6 +4,10 @@ use std::str::FromStr;
 use crate::runtime::{Runtime, RuntimeImpl};
 use crate::SentinelStore;
 
+pub struct FileSentinelStore {
+    file: <RuntimeImpl as Runtime>::File,
+}
+
 #[async_trait::async_trait]
 impl<Sentinel: FileStorableSentinel> SentinelStore<Sentinel> for FileSentinelStore {
     async fn commit(&mut self, sentinel: Sentinel) -> Result<(), DynErr> {
@@ -45,8 +49,4 @@ where
     <T as FromStr>::Err: std::error::Error + Send + Sync,
 {
     type ParseErr = <Self as FromStr>::Err;
-}
-
-pub struct FileSentinelStore {
-    file: <RuntimeImpl as Runtime>::File,
 }
