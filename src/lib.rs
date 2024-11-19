@@ -19,8 +19,6 @@ pub trait Prober {
     async fn probe(&mut self) -> Result<(), ProbeError<Self::ProcessorError>>;
 }
 
-// MAYBE we'd need a trait for this? it would be much easier to express for downstream crates than
-// as an `impl Prober` instead of this lot of generic params
 pub struct ProberImpl<Store, Sentinel, Proc, ProcErr> {
     store: Store,
     processor: Proc,
