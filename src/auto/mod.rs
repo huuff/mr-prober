@@ -5,7 +5,7 @@ use strategy::{AutoProberCfg, AutoProberStrategy};
 
 use crate::{
     runtime::{Runtime as _, RuntimeImpl},
-    Prober,
+    ProbeResult, Prober,
 };
 
 pub trait AutoProber<P: Prober> {
@@ -26,7 +26,7 @@ where
         RuntimeImpl::spawn(async move {
             loop {
                 match self.prober.probe().await {
-                    Ok(_) => match self.cfg.on_success {
+                    ProbeResult::Success => match self.cfg.on_success {
                         AutoProberStrategy::Abort => return,
                         AutoProberStrategy::DelaySecs(secs) => {
                             RuntimeImpl::sleep(secs.into()).await;
@@ -39,7 +39,7 @@ where
                             }
                         }
                     },
-                    Err(err) if err.is_empty() => match self.cfg.on_empty {
+                    ProbeResult::Empty => match self.cfg.on_empty {
                         AutoProberStrategy::Abort => {
                             tracing::info!("probe is empty, aborting");
                             return;
@@ -59,7 +59,7 @@ where
                             }
                         }
                     },
-                    err @ Err(_) => err.unwrap(),
+                    ProbeResult::Error(err) => err.panic(),
                 }
             }
         })

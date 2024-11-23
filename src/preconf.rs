@@ -2,11 +2,10 @@
 
 use crate::{proc::Processor, runtime, store, ProberImpl};
 
-impl<Sentinel, Proc, ProcErr>
-    ProberImpl<store::mem::MemorySentinelStore<Sentinel>, Sentinel, Proc, ProcErr>
+impl<Sentinel, Proc> ProberImpl<store::mem::MemorySentinelStore<Sentinel>, Sentinel, Proc>
 where
     Sentinel: store::mem::MemoryStorableSentinel,
-    Proc: Processor<Sentinel, ProcErr>,
+    Proc: Processor<Sentinel>,
 {
     /// Creates a new prober that holds its sentinel value in memory
     pub fn in_memory(processor: Proc) -> Self {
@@ -15,10 +14,10 @@ where
 }
 
 #[cfg(feature = "file")]
-impl<Sentinel, Proc, ProcErr> ProberImpl<store::file::FileSentinelStore, Sentinel, Proc, ProcErr>
+impl<Sentinel, Proc> ProberImpl<store::file::FileSentinelStore, Sentinel, Proc>
 where
     Sentinel: store::file::FileStorableSentinel,
-    Proc: Processor<Sentinel, ProcErr>,
+    Proc: Processor<Sentinel>,
 {
     /// Creates a new prober that stores its sentinel value in a file
     pub async fn from_file(

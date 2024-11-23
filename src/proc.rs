@@ -1,18 +1,20 @@
-use std::{convert::Infallible, future::Future};
+use std::future::Future;
+
+use crate::alias::DynErr;
 
 #[async_trait::async_trait]
-pub trait Processor<Sentinel, Err = Infallible> {
-    async fn next(&self, current: Option<Sentinel>) -> Result<Option<Sentinel>, Err>;
+pub trait Processor<Sentinel> {
+    async fn next(&self, current: Option<Sentinel>) -> Result<Option<Sentinel>, DynErr>;
 }
 
 #[async_trait::async_trait]
-impl<Sentinel, Err, F, Fut> Processor<Sentinel, Err> for F
+impl<Sentinel, F, Fut> Processor<Sentinel> for F
 where
     Sentinel: Send + 'static,
     F: Fn(Option<Sentinel>) -> Fut + Send + Sync,
-    Fut: Future<Output = Result<Option<Sentinel>, Err>> + Send,
+    Fut: Future<Output = Result<Option<Sentinel>, DynErr>> + Send,
 {
-    async fn next(&self, current: Option<Sentinel>) -> Result<Option<Sentinel>, Err> {
+    async fn next(&self, current: Option<Sentinel>) -> Result<Option<Sentinel>, DynErr> {
         (self)(current).await
     }
 }
