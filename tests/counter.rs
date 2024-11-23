@@ -1,8 +1,5 @@
 use mr_prober::auto::into::IntoAutoProber;
-use std::{
-    convert::Infallible,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
 use mr_prober::{auto::AutoProber, proc::Processor, Prober as _, ProberImpl};
 use rand::distributions::DistString;
@@ -16,7 +13,7 @@ async fn in_memory() {
 
     // ACT
     for _ in 0..10 {
-        prober.probe().await.unwrap();
+        prober.probe().await.expect_ok();
     }
 
     // ASSERT
@@ -39,7 +36,7 @@ async fn in_file() {
 
     // ACT
     for _ in 0..10 {
-        prober.probe().await.unwrap();
+        prober.probe().await.expect_ok();
     }
 
     // ASSERT
@@ -90,8 +87,11 @@ impl CounterProcessor {
 }
 
 #[async_trait::async_trait]
-impl Processor<u64, Infallible> for CounterProcessor {
-    async fn next(&self, current: Option<u64>) -> Result<Option<u64>, Infallible> {
+impl Processor<u64> for CounterProcessor {
+    async fn next(
+        &self,
+        current: Option<u64>,
+    ) -> Result<Option<u64>, Box<dyn std::error::Error + Send + Sync + 'static>> {
         if current.is_some_and(|it| it >= 10) {
             return Ok(None);
         }
