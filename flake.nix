@@ -55,6 +55,7 @@
           };
         };
         inherit (nix-checks.lib.${system}) checks;
+        rustChecks = nix-checks.lib.${system}.rustChecks { toolchain = rustPkgs; };
       in
       {
         checks = {
@@ -62,7 +63,7 @@
           statix = checks.statix ./.;
           deadnix = checks.deadnix ./.;
           flake-checker = checks.flake-checker ./.;
-          clippy = checks.clippy ./.;
+          clippy = rustChecks.clippy ./.;
         };
 
         # for nix fmt
