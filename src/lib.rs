@@ -37,7 +37,7 @@ impl<Store, Sentinel, Proc> ProberImpl<Store, Sentinel, Proc> {
 impl<Store, Sentinel, Proc> Prober for ProberImpl<Store, Sentinel, Proc>
 where
     Store: SentinelStore<Sentinel> + Send,
-    Proc: Processor<Sentinel> + Send,
+    Proc: Processor<Sentinel = Sentinel> + Send,
     Sentinel: Send,
 {
     async fn probe(&mut self) -> ProbeResult {

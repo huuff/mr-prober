@@ -87,7 +87,9 @@ impl CounterProcessor {
 }
 
 #[async_trait::async_trait]
-impl Processor<u64> for CounterProcessor {
+impl Processor for CounterProcessor {
+    type Sentinel = u64;
+
     async fn next(
         &self,
         current: Option<u64>,
