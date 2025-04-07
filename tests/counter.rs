@@ -1,7 +1,6 @@
-use mr_prober::auto::into::IntoAutoProber;
 use std::sync::{Arc, Mutex};
 
-use mr_prober::{auto::AutoProber, proc::Processor, Prober as _, ProberImpl};
+use mr_prober::{proc::Processor, Prober};
 use rand::distributions::DistString;
 
 #[tokio::test]
@@ -9,7 +8,7 @@ async fn in_memory() {
     // ARRANGE
     let counter = Arc::new(Mutex::new(Counter::default()));
 
-    let mut prober = ProberImpl::in_memory(CounterProcessor::new(Arc::clone(&counter)));
+    let mut prober = Prober::in_memory(CounterProcessor::new(Arc::clone(&counter)));
 
     // ACT
     for _ in 0..10 {
@@ -30,7 +29,7 @@ async fn in_file() {
 
     let test_id = rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 10);
     let file_path = format!("/tmp/mrprober-test-{test_id}");
-    let mut prober = ProberImpl::from_file(&file_path, CounterProcessor::new(Arc::clone(&counter)))
+    let mut prober = Prober::from_file(&file_path, CounterProcessor::new(Arc::clone(&counter)))
         .await
         .unwrap();
 
@@ -51,7 +50,7 @@ async fn auto_prober() {
     // ARRANGE
     let counter = Arc::new(Mutex::new(Counter::default()));
 
-    let prober = ProberImpl::in_memory(CounterProcessor::new(Arc::clone(&counter)));
+    let prober = Prober::in_memory(CounterProcessor::new(Arc::clone(&counter)));
 
     // ACT
     prober.into_auto(Default::default()).spawn().await.unwrap();

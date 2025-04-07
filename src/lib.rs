@@ -12,18 +12,13 @@ use proc::Processor;
 use store::SentinelStore;
 use thiserror::Error;
 
-#[async_trait::async_trait]
-pub trait Prober {
-    async fn probe(&mut self) -> ProbeResult;
-}
-
-pub struct ProberImpl<Store, Sentinel, Proc> {
+pub struct Prober<Store, Sentinel, Proc> {
     store: Store,
     processor: Proc,
     _sentinel: PhantomData<Sentinel>,
 }
 
-impl<Store, Sentinel, Proc> ProberImpl<Store, Sentinel, Proc> {
+impl<Store, Sentinel, Proc> Prober<Store, Sentinel, Proc> {
     pub fn new(storage: Store, processor: Proc) -> Self {
         Self {
             store: storage,
@@ -33,14 +28,13 @@ impl<Store, Sentinel, Proc> ProberImpl<Store, Sentinel, Proc> {
     }
 }
 
-#[async_trait::async_trait]
-impl<Store, Sentinel, Proc> Prober for ProberImpl<Store, Sentinel, Proc>
+impl<Store, Sentinel, Proc> Prober<Store, Sentinel, Proc>
 where
     Store: SentinelStore<Sentinel> + Send,
     Proc: Processor<Sentinel = Sentinel> + Send,
     Sentinel: Send,
 {
-    async fn probe(&mut self) -> ProbeResult {
+    pub async fn probe(&mut self) -> ProbeResult {
         let current_sentinel = match self.store.current().await {
             Ok(current_sentinel) => current_sentinel,
             Err(store_err) => return ProbeResult::Error(ProbeError::Store(store_err)),

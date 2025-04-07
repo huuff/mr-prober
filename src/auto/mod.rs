@@ -4,25 +4,24 @@ pub mod strategy;
 use strategy::{AutoProberCfg, AutoProberStrategy};
 
 use crate::{
+    proc::Processor,
     runtime::{Runtime as _, RuntimeImpl},
+    store::SentinelStore,
     ProbeResult, Prober,
 };
 
-pub trait AutoProber<P: Prober> {
-    fn spawn(self) -> tokio::task::JoinHandle<()>;
-}
-
-pub struct AutoProberImpl<P> {
-    prober: P,
+pub struct AutoProber<Store, Sentinel, Proc> {
+    prober: Prober<Store, Sentinel, Proc>,
     cfg: AutoProberCfg,
 }
 
-#[async_trait::async_trait]
-impl<P> AutoProber<P> for AutoProberImpl<P>
+impl<Store, Sentinel, Proc> AutoProber<Store, Sentinel, Proc>
 where
-    P: Prober + Send + Sync + 'static,
+    Store: SentinelStore<Sentinel> + Send + 'static,
+    Proc: Processor<Sentinel = Sentinel> + Send + 'static,
+    Sentinel: Send + 'static,
 {
-    fn spawn(mut self) -> tokio::task::JoinHandle<()> {
+    pub fn spawn(mut self) -> tokio::task::JoinHandle<()> {
         RuntimeImpl::spawn(async move {
             loop {
                 match self.prober.probe().await {
