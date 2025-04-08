@@ -6,6 +6,7 @@ use crate::alias::DynErr;
 
 use super::SentinelStore;
 
+// TODO can't I just async_trait::async_trait?
 impl<T> SentinelStore<T> for Box<dyn SentinelStore<T> + Send + Sync + 'static> {
     #[must_use]
     #[allow(clippy::type_complexity, clippy::type_repetition_in_bounds)]

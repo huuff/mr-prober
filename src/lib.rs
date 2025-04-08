@@ -94,3 +94,10 @@ impl ProbeError {
         panic!("probe error: {self:?}");
     }
 }
+
+#[cfg(test)]
+mockall::mock! {
+    pub Prober<Store, Sentinel, Proc> {
+        pub async fn probe(&mut self) -> ProbeResult;
+    }
+}

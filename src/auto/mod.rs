@@ -3,11 +3,13 @@ pub mod strategy;
 
 use strategy::{AutoProberCfg, AutoProberStrategy};
 
+#[mockall_double::double]
+use crate::Prober;
 use crate::{
     proc::Processor,
     runtime::{Runtime as _, RuntimeImpl},
     store::SentinelStore,
-    ProbeResult, Prober,
+    ProbeResult,
 };
 
 pub struct AutoProber<Store, Sentinel, Proc> {
@@ -99,5 +101,30 @@ where
                 }
             }
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::proc::MockProcessor;
+    use crate::store::MockSentinelStore;
+    use crate::MockProber;
+
+    #[tokio::test]
+    async fn actually_probes() {
+        let mut prober = MockProber::<MockSentinelStore<_>, (), MockProcessor>::new();
+        prober
+            .expect_probe()
+            .times(1..)
+            .returning(|| ProbeResult::Success);
+
+        let auto = AutoProber {
+            prober,
+            cfg: AutoProberCfg::default(),
+        };
+
+        auto.spawn().await.unwrap();
+        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
     }
 }

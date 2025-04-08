@@ -6,6 +6,7 @@ pub mod mem;
 use crate::alias::DynErr;
 
 #[async_trait::async_trait]
+#[cfg_attr(test, mockall::automock)]
 pub trait SentinelStore<Sentinel> {
     async fn current(&self) -> Result<Option<Sentinel>, DynErr>;
     async fn commit(&mut self, sentinel: Sentinel) -> Result<(), DynErr>;

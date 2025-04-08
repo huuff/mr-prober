@@ -1,3 +1,4 @@
+#[mockall_double::double]
 use crate::Prober;
 
 use super::{strategy::AutoProberCfg, AutoProber};
