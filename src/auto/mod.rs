@@ -112,7 +112,7 @@ mod tests {
     use crate::MockProber;
 
     #[tokio::test]
-    async fn actually_probes() {
+    async fn probes_and_aborts_on_first_success() {
         let mut prober = MockProber::<MockSentinelStore<_>, (), MockProcessor>::new();
         prober
             .expect_probe()
@@ -121,7 +121,10 @@ mod tests {
 
         let auto = AutoProber {
             prober,
-            cfg: AutoProberCfg::default(),
+            cfg: AutoProberCfg {
+                on_success: AutoProberStrategy::Abort,
+                ..Default::default()
+            },
         };
 
         auto.spawn().await.unwrap();
