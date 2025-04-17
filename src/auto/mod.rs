@@ -3,26 +3,27 @@ pub mod strategy;
 
 use strategy::{AutoProberCfg, AutoProberStrategy};
 
+#[mockall_double::double]
+use crate::Prober;
 use crate::{
+    proc::Processor,
     runtime::{Runtime as _, RuntimeImpl},
-    ProbeResult, Prober,
+    store::SentinelStore,
+    ProbeResult,
 };
 
-pub trait AutoProber<P: Prober> {
-    fn spawn(self) -> tokio::task::JoinHandle<()>;
-}
-
-pub struct AutoProberImpl<P> {
-    prober: P,
+pub struct AutoProber<Store, Sentinel, Proc> {
+    prober: Prober<Store, Sentinel, Proc>,
     cfg: AutoProberCfg,
 }
 
-#[async_trait::async_trait]
-impl<P> AutoProber<P> for AutoProberImpl<P>
+impl<Store, Sentinel, Proc> AutoProber<Store, Sentinel, Proc>
 where
-    P: Prober + Send + Sync + 'static,
+    Store: SentinelStore<Sentinel> + Send + 'static,
+    Proc: Processor<Sentinel = Sentinel> + Send + 'static,
+    Sentinel: Send + 'static,
 {
-    fn spawn(mut self) -> tokio::task::JoinHandle<()> {
+    pub fn spawn(mut self) -> tokio::task::JoinHandle<()> {
         RuntimeImpl::spawn(async move {
             loop {
                 match self.prober.probe().await {
@@ -100,5 +101,33 @@ where
                 }
             }
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::proc::MockProcessor;
+    use crate::store::MockSentinelStore;
+    use crate::MockProber;
+
+    #[tokio::test]
+    async fn probes_and_aborts_on_first_success() {
+        let mut prober = MockProber::<MockSentinelStore<_>, (), MockProcessor>::new();
+        prober
+            .expect_probe()
+            .times(1..)
+            .returning(|| ProbeResult::Success);
+
+        let auto = AutoProber {
+            prober,
+            cfg: AutoProberCfg {
+                on_success: AutoProberStrategy::Abort,
+                ..Default::default()
+            },
+        };
+
+        auto.spawn().await.unwrap();
+        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
     }
 }

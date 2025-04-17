@@ -3,6 +3,7 @@ use std::{future::Future, marker::PhantomData};
 use crate::alias::DynErr;
 
 #[async_trait::async_trait]
+#[cfg_attr(test, mockall::automock(type Sentinel = ();))]
 pub trait Processor {
     type Sentinel;
 

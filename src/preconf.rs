@@ -1,8 +1,8 @@
 //! Preconfigured probers
 
-use crate::{proc::Processor, runtime, store, ProberImpl};
+use crate::{proc::Processor, runtime, store, Prober};
 
-impl<Sentinel, Proc> ProberImpl<store::mem::MemorySentinelStore<Sentinel>, Sentinel, Proc>
+impl<Sentinel, Proc> Prober<store::mem::MemorySentinelStore<Sentinel>, Sentinel, Proc>
 where
     Sentinel: store::mem::MemoryStorableSentinel,
     Proc: Processor<Sentinel = Sentinel>,
@@ -14,7 +14,7 @@ where
 }
 
 #[cfg(feature = "file")]
-impl<Sentinel, Proc> ProberImpl<store::file::FileSentinelStore, Sentinel, Proc>
+impl<Sentinel, Proc> Prober<store::file::FileSentinelStore, Sentinel, Proc>
 where
     Sentinel: store::file::FileStorableSentinel,
     Proc: Processor<Sentinel = Sentinel>,

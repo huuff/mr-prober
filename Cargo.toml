@@ -10,12 +10,14 @@ thiserror = { version = "2" }
 async-trait = { version = "0.1" }
 tracing = { version = "0.1" }
 exponential-backoff = { version = "2" }
+mockall_double = { version = "0.3" }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
 enclose = { version = "1" }
 rand = { version = "0.8" }
 impls = { version = "1" }
+mockall = { version = "0.13" }
 
 [features]
 file = []
